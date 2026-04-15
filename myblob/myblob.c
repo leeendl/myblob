@@ -1,51 +1,56 @@
 struct myblob
 {
-    myblob(const char *_data) 
+    inline myblob(const char *_Str) 
     {
-        int len = 0;
-        while (_data[len] != '\0')
-        {
-            ++len;
-        }
-
-        mSize = len;
+        const char *_end = _Str;
+        while (*_end != '\0') { ++_end; }
+        mSize = _end - _Str;
         mData = new char[mSize];
 
-        _memcpy(mData, _data, mSize);
+        _memcpy(mData, _Str, mSize);
     }
-    myblob(int _x)
+    inline myblob(const wchar_t *_Str) 
     {
-        mSize = sizeof(int);
+        const wchar_t *_end = _Str;
+        while (*_end != wchar_t('\0')) { ++_end; }
+        mSize = _end - _Str;
+        mData = new char[mSize];
+
+        _memcpy(mData, _Str, mSize);
+    }
+    inline myblob(int _x)
+    {
+        mSize = (int)sizeof(int);
         mData = new char[mSize];
 
         _memcpy(mData, &_x, mSize);
     }
 
-    void copy_to(void* _dest, int _size) const
+    inline void copy_to(void *__restrict__ __dst, int __n) const
     {
-        _memcpy(_dest, mData, _size);
+        _memcpy(__dst, mData, __n);
     }
 
-    const char* data() const { return this->mData; }
-    int         size() const { return this->mSize; }
+    inline char* data() const { return mData; }
+    inline int   size() const { return mSize; }
 
-    ~myblob() { delete[] this->mData; }
+    ~myblob() { delete[] mData; }
 
 private:
     char* mData = nullptr;
     int   mSize = 0;
 
-    static void _memcpy(void* _dest, const void* _data, int _size)
+    static inline void _memcpy(void *__restrict__ __dst, const void *__restrict__ __src, int __n)
     {
 #if defined(_STRING_H) || defined(_INC_STRING) || defined(_GLIBCXX_STRING_H)
-        std::memcpy(_dest, _data, _size); // for memory overwrite like mimalloc
+        std::memcpy(__dst, __src, __n); // for memory overwrite like mimalloc
 #else
-        char*       dest = (char*)_dest;
-        const char* data = (const char*)_data;
+        char*       dst = (char*)__dst;
+        const char* src = (const char*)__src;
         
-        for (int i = 0; i < _size; ++i)
+        for (int i = 0; i < __n; ++i)
         {
-            dest[i] = data[i];
+            dst[i] = src[i];
         }
 #endif
     }
