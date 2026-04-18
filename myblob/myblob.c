@@ -1,57 +1,26 @@
+#include <cstring>
+
 struct myblob
 {
-    inline myblob(const char *_Str) 
+    myblob(const void* _data, int _size) : mSize(_size), mData(new char[_size])
     {
-        const char *_end = _Str;
-        while (*_end != '\0') { ++_end; }
-        mSize = _end - _Str;
-        mData = new char[mSize];
-
-        _memcpy(mData, _Str, mSize);
+        std::memcpy(mData, _data, (size_t)mSize);
     }
-    inline myblob(const wchar_t *_Str) 
-    {
-        const wchar_t *_end = _Str;
-        while (*_end != wchar_t('\0')) { ++_end; }
-        mSize = _end - _Str;
-        mData = new char[mSize];
-
-        _memcpy(mData, _Str, mSize);
-    }
-    inline myblob(int _x)
-    {
-        mSize = (int)sizeof(int);
-        mData = new char[mSize];
-
-        _memcpy(mData, &_x, mSize);
-    }
+    inline myblob(const char *_Str)    : myblob(_Str, (int)std::strlen(_Str)) {}
+    inline myblob(const wchar_t *_Str) : myblob(_Str, (int)((wcslen(_Str)+1) * sizeof(wchar_t))) {}
+    inline myblob(int _x)              : myblob(&_x, sizeof(_x)) {}
 
     inline void copy_to(void *__restrict__ __dst, int __n) const
     {
-        _memcpy(__dst, mData, __n);
+        std::memcpy(__dst, mData, __n);
     }
 
-    inline char* data() const { return mData; }
-    inline int   size() const { return mSize; }
+    inline const char* data() const { return mData; }
+    inline int         size() const { return mSize; }
 
-    ~myblob() { delete[] mData; }
+    inline ~myblob() { delete[] mData; }
 
 private:
     char* mData = nullptr;
     int   mSize = 0;
-
-    static inline void _memcpy(void *__restrict__ __dst, const void *__restrict__ __src, int __n)
-    {
-#if defined(_STRING_H) || defined(_INC_STRING) || defined(_GLIBCXX_STRING_H)
-        std::memcpy(__dst, __src, __n); // for memory overwrite like mimalloc
-#else
-        char*       dst = (char*)__dst;
-        const char* src = (const char*)__src;
-        
-        for (int i = 0; i < __n; ++i)
-        {
-            dst[i] = src[i];
-        }
-#endif
-    }
 };
